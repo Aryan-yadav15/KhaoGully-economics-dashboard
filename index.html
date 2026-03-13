@@ -161,11 +161,6 @@ tbody tr:hover{background:var(--bg3);}
 
 <div class="topbar">
   <div><div class="topbar-title">BUSINESS ECONOMICS</div><div class="topbar-sub">Full simulation dashboard</div></div>
-  <div class="sc-btns">
-    <button class="sc-btn" onclick="loadScenario('early',this)">Early (60 orders)</button>
-    <button class="sc-btn active" onclick="loadScenario('growth',this)">Growth (400 orders)</button>
-    <button class="sc-btn" onclick="loadScenario('scale',this)">Scale (1000 orders)</button>
-  </div>
   <div class="top-pill" id="top-pill">● PROFITABLE</div>
 </div>
 
@@ -351,7 +346,7 @@ tbody tr:hover{background:var(--bg3);}
   <!-- PLATFORM TAB -->
   <div class="tab-content" id="tab-platform">
     <div class="metrics" style="grid-template-columns:repeat(5,1fr)">
-      <div class="metric"><div class="metric-bar" style="background:var(--amber)"></div><div class="metric-label">Monthly revenue</div><div class="metric-val" id="pm-rev">—</div><div class="metric-sub">commission income</div></div>
+      <div class="metric"><div class="metric-bar" style="background:var(--amber)"></div><div class="metric-label">Monthly revenue</div><div class="metric-val" id="pm-rev">—</div><div class="metric-sub">commission + delivery + platform fees</div></div>
       <div class="metric"><div class="metric-bar" style="background:var(--green)"></div><div class="metric-label">Monthly profit</div><div class="metric-val" id="pm-profit">—</div><div class="metric-sub" id="pm-profit-sub">—</div></div>
       <div class="metric"><div class="metric-bar" style="background:var(--blue)"></div><div class="metric-label">ARPU / month</div><div class="metric-val" id="pm-arpu">—</div><div class="metric-sub">avg revenue per user</div></div>
       <div class="metric"><div class="metric-bar" style="background:var(--purple)"></div><div class="metric-label">Customer LTV</div><div class="metric-val" id="pm-ltv">—</div><div class="metric-sub" id="pm-ltv-sub">—</div></div>
@@ -389,10 +384,15 @@ tbody tr:hover{background:var(--bg3);}
       </div>
       <div class="plat-card">
         <div class="plat-card-title">Cost structure / month</div>
+        <div class="prow" style="font-size:11px;color:var(--muted2);border-bottom:none">Variable costs (from delivery)</div>
+        <div class="prow">Driver payouts<span class="pval neg" id="pp-drivercost">—</span></div>
+        <div class="prow">Daily ops (×30)<span class="pval neg" id="pp-dailyops">—</span></div>
+        <div class="prow">Payment gateway (~2%)<span class="pval neg" id="pp-gateway">—</span></div>
+        <div class="prow" style="font-size:11px;color:var(--muted2);border-bottom:none;margin-top:4px">Fixed costs</div>
         <div class="prow">Marketing / ads<span class="pval neg" id="pp-mktg">—</span></div>
         <div class="prow">Tech infrastructure<span class="pval neg" id="pp-infra">—</span></div>
         <div class="prow">Ops / salaries<span class="pval neg" id="pp-platops">—</span></div>
-        <div class="prow" style="font-weight:600">Total costs<span class="pval neg" id="pp-totalcost">—</span></div>
+        <div class="prow" style="font-weight:600;border-top:1px solid var(--border);margin-top:4px;padding-top:6px">Total costs<span class="pval neg" id="pp-totalcost">—</span></div>
         <div class="prow">Total revenue<span class="pval amb" id="pp-totalrev">—</span></div>
         <div class="prow" style="border-bottom:none;font-weight:600">Net profit<span class="pval" id="pp-netprofit">—</span></div>
       </div>
@@ -487,17 +487,33 @@ function distributeOrders(total){
   const badges=document.getElementById('dist-badges');
   badges.innerHTML='';
   activeWins.forEach(w=>{
-    const winOrders=Math.max(5,Math.round(total*(w.share/totalShare)));
-    const perPool=Math.max(1,Math.round(winOrders/ws[w.id].p));
-    ws[w.id].o=perPool;
-    // update number inputs and sliders for that window
+    const winOrders = Math.max(1, Math.round(total * (w.share / totalShare)));
+    // auto-scale pools down so orders/pool stays meaningful (min 5/pool = 1 full run)
+    const maxPools  = Math.max(1, Math.floor(winOrders / 5));
+    const newPools  = Math.min(ws[w.id].p, maxPools);
+    ws[w.id].p = newPools;
+    const perPool   = Math.max(1, Math.round(winOrders / newPools));
+    ws[w.id].o = perPool;
+
+    // sync pool count inputs
+    const pni=document.getElementById('wni-p-'+w.id);
+    const psi=document.getElementById('wsi-p-'+w.id);
+    const pvl=document.getElementById('wvp-'+w.id);
+    if(pni)pni.value=newPools;
+    if(pvl)pvl.textContent=newPools;
+    if(psi)psi.value=newPools;
+
+    // sync orders/pool inputs
     const ni=document.getElementById('wni-o-'+w.id);
     const si=document.getElementById('wsi-o-'+w.id);
     const lbl=document.getElementById('wvo-'+w.id);
     if(ni)ni.value=perPool;
     if(lbl)lbl.textContent=perPool;
     if(si){if(perPool>Number(si.max))si.max=perPool*2;si.value=perPool;}
-    badges.innerHTML+=`<span class="dist-badge" style="background:${WINS.find(ww=>ww.id===w.id).bg};color:${WINS.find(ww=>ww.id===w.id).dot};border:1px solid ${WINS.find(ww=>ww.id===w.id).dot}44">${w.name}: ${winOrders}</span>`;
+
+    const actual = perPool * newPools;
+    const ww = WINS.find(ww=>ww.id===w.id);
+    badges.innerHTML+=`<span class="dist-badge" style="background:${ww.bg};color:${ww.dot};border:1px solid ${ww.dot}44">${w.name}: ${actual}</span>`;
   });
 }
 
@@ -569,13 +585,13 @@ function recalcD(){
   WINS.forEach(w=>{
     const s=ws[w.id];
     if(!s.on){res.push({...w,on:false});return;}
-    const wO=s.p*s.o,wR=s.p*Math.floor(s.o/5);
+    const wO=s.p*s.o,wR=s.p*Math.ceil(s.o/5);  // ceil: partial batch still needs a driver
     const cR=wO*aov*comm,dR=wO*s.f,pR=wO*platfee,dc=wR*dpay,wait=s.d+prep+dtime;
     tO+=wO;tR+=wR;tP+=s.p;tD+=wR;tC+=cR;tDel+=dR;tPlatRev+=pR;tDC+=dc;
     if(wait>maxW)maxW=wait;
     res.push({...w,on:true,wO,wR,cR,dR,pR,dc,wp:cR+dR+pR-dc,s,wait});
     const strip=document.getElementById('wstrip-'+w.id);
-    if(strip){let p='';for(let i=0;i<s.p;i++)p+=`<div class="ppill" style="background:${w.bg};color:${w.dot};border:1px solid ${w.dot}44">${Math.floor(s.o/5)}r</div>`;strip.innerHTML=p;}
+    if(strip){let p='';for(let i=0;i<s.p;i++)p+=`<div class="ppill" style="background:${w.bg};color:${w.dot};border:1px solid ${w.dot}44">${Math.ceil(s.o/5)}r</div>`;strip.innerHTML=p;}
     const stats=document.getElementById('wstats-'+w.id);
     if(stats)stats.innerHTML=`<div><div class="ws-label">Orders</div><div class="ws-val">${wO}</div></div><div><div class="ws-label">Drivers</div><div class="ws-val">${wR}</div></div><div><div class="ws-label">Revenue</div><div class="ws-val" style="color:var(--amber)">₹${ri(cR+dR+pR)}</div></div><div><div class="ws-label">Wait</div><div class="ws-val" style="color:var(--muted)">${wait}m</div></div>`;
   });
@@ -584,7 +600,7 @@ function recalcD(){
   const be=mpo>0?Math.ceil(opcost/mpo):999999;
 
   // save snapshot for platform tab
-  delivSnap={tO,tC,tDel,tPlat:tPlatRev,dailyRev:tRev};
+  delivSnap={tO,tC,tDel,tPlat:tPlatRev,dailyRev:tRev,tDC,opcost};
 
   S('m-profit',(net>=0?'+':'')+'₹'+ri(net),net>=0?'var(--green)':'var(--red)');
   S('m-profit-sub',net>=0?'profitable day':'losing — adjust levers');
@@ -642,8 +658,14 @@ function recalcP(){
   const ratio   = cac > 0 ? ltv/cac : 0;
   const payback = arpu > 0 ? cac/arpu : 0;
 
-  // ── Costs & profit ──
-  const totalCosts = mktg + infra + platops;
+  // ── Variable costs (from delivery) ──
+  const monthlyDriverCost = (delivSnap.tDC || 0) * 30;
+  const monthlyOpsCost    = (delivSnap.opcost || 0) * 30;
+  const gmv               = dailyOrders * gv('aov') * 30;  // gross merchandise value
+  const gatewayCost       = gmv * 0.02;  // Razorpay ~2%
+
+  // ── Total costs & profit ──
+  const totalCosts = monthlyDriverCost + monthlyOpsCost + gatewayCost + mktg + infra + platops;
   const netP       = totalRev - totalCosts;
 
   // ── Churn / growth ──
@@ -691,7 +713,11 @@ function recalcP(){
   const rrl=document.getElementById('pp-ratio-label');
   if(rrl){rrl.textContent=ratio>=3?'Healthy':ratio>=1?'Warning':'Critical';rrl.style.color=rC;}
 
-  // costs
+  // costs — variable
+  S('pp-drivercost','₹'+ri(monthlyDriverCost));
+  S('pp-dailyops','₹'+ri(monthlyOpsCost));
+  S('pp-gateway','₹'+ri(gatewayCost));
+  // costs — fixed
   S('pp-mktg','₹'+ri(mktg));
   S('pp-infra','₹'+ri(infra));
   S('pp-platops','₹'+ri(platops));
@@ -712,14 +738,17 @@ function recalcP(){
       <div class="prow" style="border-bottom:none">Annual profit<span class="pval ${netP>=0?'pos':'neg'}">${netP>=0?'+':''}₹${ri(netP*12)}</span></div>`;
   }
 
-  // P&L table — 3 revenue lines now
+  // P&L table — revenue + all costs
   const items=[
-    {n:'Commission revenue',     c:'Revenue', v:monthlyCommRev,  s:1},
-    {n:'Delivery fee revenue',   c:'Revenue', v:monthlyDelivRev, s:1},
-    {n:'Platform fee revenue',   c:'Revenue', v:monthlyPlatRev,  s:1},
-    {n:'Marketing / ads',        c:'Cost',    v:mktg,            s:-1},
-    {n:'Tech infrastructure',    c:'Cost',    v:infra,           s:-1},
-    {n:'Ops / salaries',         c:'Cost',    v:platops,         s:-1},
+    {n:'Commission revenue',     c:'Revenue',       v:monthlyCommRev,     s:1},
+    {n:'Delivery fee revenue',   c:'Revenue',       v:monthlyDelivRev,    s:1},
+    {n:'Platform fee revenue',   c:'Revenue',       v:monthlyPlatRev,     s:1},
+    {n:'Driver payouts',         c:'Variable cost', v:monthlyDriverCost,  s:-1},
+    {n:'Daily operations (×30)', c:'Variable cost', v:monthlyOpsCost,     s:-1},
+    {n:'Payment gateway (~2%)',  c:'Variable cost', v:gatewayCost,        s:-1},
+    {n:'Marketing / ads',        c:'Fixed cost',    v:mktg,               s:-1},
+    {n:'Tech infrastructure',    c:'Fixed cost',    v:infra,              s:-1},
+    {n:'Ops / salaries',         c:'Fixed cost',    v:platops,            s:-1},
   ];
   const pb=document.getElementById('pl-body');pb.innerHTML='';
   items.forEach(it=>{
