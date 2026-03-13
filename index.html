@@ -585,15 +585,17 @@ function recalcD(){
   WINS.forEach(w=>{
     const s=ws[w.id];
     if(!s.on){res.push({...w,on:false});return;}
-    const wO=s.p*s.o,wR=s.p*Math.ceil(s.o/5);  // ceil: partial batch still needs a driver
+    const wO=s.p*s.o,wR=s.p*Math.ceil(s.o/5);  // total runs across all pools (for cost)
+    const wD=Math.ceil(s.o/5);  // drivers needed (reused across sequential pools)
     const cR=wO*aov*comm,dR=wO*s.f,pR=wO*platfee,dc=wR*dpay,wait=s.d+prep+dtime;
-    tO+=wO;tR+=wR;tP+=s.p;tD+=wR;tC+=cR;tDel+=dR;tPlatRev+=pR;tDC+=dc;
+    tO+=wO;tR+=wR;tP+=s.p;tC+=cR;tDel+=dR;tPlatRev+=pR;tDC+=dc;
+    if(wD>tD)tD=wD;  // drivers = max across windows (they don't overlap)
     if(wait>maxW)maxW=wait;
-    res.push({...w,on:true,wO,wR,cR,dR,pR,dc,wp:cR+dR+pR-dc,s,wait});
+    res.push({...w,on:true,wO,wR,wD,cR,dR,pR,dc,wp:cR+dR+pR-dc,s,wait});
     const strip=document.getElementById('wstrip-'+w.id);
     if(strip){let p='';for(let i=0;i<s.p;i++)p+=`<div class="ppill" style="background:${w.bg};color:${w.dot};border:1px solid ${w.dot}44">${Math.ceil(s.o/5)}r</div>`;strip.innerHTML=p;}
     const stats=document.getElementById('wstats-'+w.id);
-    if(stats)stats.innerHTML=`<div><div class="ws-label">Orders</div><div class="ws-val">${wO}</div></div><div><div class="ws-label">Drivers</div><div class="ws-val">${wR}</div></div><div><div class="ws-label">Revenue</div><div class="ws-val" style="color:var(--amber)">₹${ri(cR+dR+pR)}</div></div><div><div class="ws-label">Wait</div><div class="ws-val" style="color:var(--muted)">${wait}m</div></div>`;
+    if(stats)stats.innerHTML=`<div><div class="ws-label">Orders</div><div class="ws-val">${wO}</div></div><div><div class="ws-label">Drivers</div><div class="ws-val">${wD}</div></div><div><div class="ws-label">Runs</div><div class="ws-val">${wR}</div></div><div><div class="ws-label">Revenue</div><div class="ws-val" style="color:var(--amber)">₹${ri(cR+dR+pR)}</div></div>`;
   });
   const tRev=tC+tDel+tPlatRev,tCost=tDC+opcost,net=tRev-tCost;
   const rpo=tO>0?tRev/tO:0,dco=tO>0?tDC/tO:0,mpo=rpo-dco;
@@ -632,7 +634,7 @@ function recalcD(){
 
   const tb=document.getElementById('bd-body');tb.innerHTML='';
   res.filter(r=>r.on).forEach(r=>{
-    tb.innerHTML+=`<tr><td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${r.dot};margin-right:7px"></span>${r.name}</td><td>${r.s.p}×${r.s.d}m</td><td>${r.wO}</td><td>${r.wR}</td><td>${r.wR}</td><td class="amb">₹${r.s.f}</td><td class="blu">₹${platfee}</td><td class="amb">₹${ri(r.cR)}</td><td class="amb">₹${ri(r.dR)}</td><td class="blu">₹${ri(r.pR)}</td><td class="neg">₹${ri(r.dc)}</td><td class="${r.wp>=0?'pos':'neg'}">${r.wp>=0?'+':''}₹${ri(r.wp)}</td></tr>`;
+    tb.innerHTML+=`<tr><td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${r.dot};margin-right:7px"></span>${r.name}</td><td>${r.s.p}×${r.s.d}m</td><td>${r.wO}</td><td>${r.wR}</td><td>${r.wD}</td><td class="amb">₹${r.s.f}</td><td class="blu">₹${platfee}</td><td class="amb">₹${ri(r.cR)}</td><td class="amb">₹${ri(r.dR)}</td><td class="blu">₹${ri(r.pR)}</td><td class="neg">₹${ri(r.dc)}</td><td class="${r.wp>=0?'pos':'neg'}">${r.wp>=0?'+':''}₹${ri(r.wp)}</td></tr>`;
   });
   document.getElementById('bd-foot').innerHTML=`<td><strong>Total</strong></td><td class="amb">${tP}</td><td class="amb">${tO}</td><td class="amb">${tR}</td><td class="amb">${tD}</td><td>—</td><td>—</td><td class="amb">₹${ri(tC)}</td><td class="amb">₹${ri(tDel)}</td><td class="blu">₹${ri(tPlatRev)}</td><td class="neg">₹${ri(tDC)}</td><td class="${net>=0?'pos':'neg'}">${net>=0?'+':''}₹${ri(net)}</td>`;
 
