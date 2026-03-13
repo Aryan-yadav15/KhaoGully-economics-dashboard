@@ -213,10 +213,11 @@ tbody tr:hover{background:var(--bg3);}
     </div>
 
     <div class="sb-section">
-      <div class="sb-label">Ops cost / day</div>
+      <div class="sb-label">Daily ops cost</div>
       <div class="ctrl">
-        <div class="ctrl-label">Operational cost <span class="ctrl-val" id="v-opcost">₹800</span></div>
+        <div class="ctrl-label">Operational cost / day <span class="ctrl-val" id="v-opcost">₹800</span></div>
         <div class="ctrl-inputs"><input type="range" min="0" max="10000" step="100" value="800" id="s-opcost" oninput="syncS('opcost',this.value);recalcD()"><input type="number" id="n-opcost" value="800" min="0" oninput="syncN('opcost',this.value);recalcD()"></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">Packaging, phone recharges, misc daily spend. Shows as ×30 in Platform tab.</div>
       </div>
     </div>
 
@@ -249,7 +250,7 @@ tbody tr:hover{background:var(--bg3);}
     <div class="sb-section">
       <div class="sb-label">Users</div>
       <div class="ctrl">
-        <div class="ctrl-label">Monthly active users <span class="ctrl-val" id="v-mau">2,000</span></div>
+        <div class="ctrl-label">MAU (monthly active users) <span class="ctrl-val" id="v-mau">2,000</span></div>
         <div class="ctrl-inputs"><input type="range" min="100" max="100000" step="100" value="2000" id="s-mau" oninput="syncS('mau',this.value);recalcP()"><input type="number" id="n-mau" value="2000" min="1" oninput="syncN('mau',this.value);recalcP()"></div>
       </div>
       <div class="ctrl">
@@ -268,7 +269,7 @@ tbody tr:hover{background:var(--bg3);}
     <div class="sb-section">
       <div class="sb-label">Growth costs</div>
       <div class="ctrl">
-        <div class="ctrl-label">CAC (₹ per new user) <span class="ctrl-val" id="v-cac">₹120</span></div>
+        <div class="ctrl-label">CAC (₹ to acquire 1 user) <span class="ctrl-val" id="v-cac">₹120</span></div>
         <div class="ctrl-inputs"><input type="range" min="10" max="2000" step="10" value="120" id="s-cac" oninput="syncS('cac',this.value);recalcP()"><input type="number" id="n-cac" value="120" min="0" oninput="syncN('cac',this.value);recalcP()"></div>
       </div>
       <div class="ctrl">
@@ -348,16 +349,16 @@ tbody tr:hover{background:var(--bg3);}
     <div class="metrics" style="grid-template-columns:repeat(5,1fr)">
       <div class="metric"><div class="metric-bar" style="background:var(--amber)"></div><div class="metric-label">Monthly revenue</div><div class="metric-val" id="pm-rev">—</div><div class="metric-sub">commission + delivery + platform fees</div></div>
       <div class="metric"><div class="metric-bar" style="background:var(--green)"></div><div class="metric-label">Monthly profit</div><div class="metric-val" id="pm-profit">—</div><div class="metric-sub" id="pm-profit-sub">—</div></div>
-      <div class="metric"><div class="metric-bar" style="background:var(--blue)"></div><div class="metric-label">ARPU / month</div><div class="metric-val" id="pm-arpu">—</div><div class="metric-sub">avg revenue per user</div></div>
-      <div class="metric"><div class="metric-bar" style="background:var(--purple)"></div><div class="metric-label">Customer LTV</div><div class="metric-val" id="pm-ltv">—</div><div class="metric-sub" id="pm-ltv-sub">—</div></div>
-      <div class="metric"><div class="metric-bar" style="background:var(--green)"></div><div class="metric-label">LTV : CAC</div><div class="metric-val" id="pm-ratio">—</div><div class="metric-sub" id="pm-ratio-sub">—</div></div>
+      <div class="metric"><div class="metric-bar" style="background:var(--blue)"></div><div class="metric-label">ARPU / month</div><div class="metric-val" id="pm-arpu">—</div><div class="metric-sub">total revenue ÷ active users</div></div>
+      <div class="metric"><div class="metric-bar" style="background:var(--purple)"></div><div class="metric-label">Customer LTV</div><div class="metric-val" id="pm-ltv">—</div><div class="metric-sub" id="pm-ltv-sub">total ₹ a user brings in their lifetime</div></div>
+      <div class="metric"><div class="metric-bar" style="background:var(--green)"></div><div class="metric-label">LTV : CAC</div><div class="metric-val" id="pm-ratio">—</div><div class="metric-sub" id="pm-ratio-sub">lifetime value vs cost to acquire</div></div>
     </div>
     <div class="plat-grid">
       <div class="plat-card">
         <div class="plat-card-title">User funnel</div>
-        <div class="prow">Monthly active users<span class="pval" id="pp-mau">—</span></div>
+        <div class="prow">MAU (monthly active users)<span class="pval" id="pp-mau">—</span></div>
         <div class="prow">New users / month<span class="pval pos" id="pp-newu">—</span></div>
-        <div class="prow">Churned users / month<span class="pval neg" id="pp-churn">—</span></div>
+        <div class="prow">Churned users (stopped ordering)<span class="pval neg" id="pp-churn">—</span></div>
         <div class="prow">Net MAU change<span class="pval" id="pp-net">—</span></div>
         <div class="prow" style="border-bottom:none">Retention rate<span class="pval" id="pp-ret">—</span></div>
         <div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">Retention health<span class="health-label" id="pp-ret-label">—</span></div><div class="hbar-bg"><div id="pp-ret-bar" class="hbar-fill"></div></div></div>
@@ -371,23 +372,22 @@ tbody tr:hover{background:var(--bg3);}
         <div class="prow">Delivery fee revenue<span class="pval amb" id="pp-deliv-rev">—</span></div>
         <div class="prow">Platform fee revenue<span class="pval amb" id="pp-plat-rev">—</span></div>
         <div class="prow" style="font-weight:600">Total monthly revenue<span class="pval amb" id="pp-rev2">—</span></div>
-        <div class="prow" style="border-bottom:none">ARPU (rev ÷ MAU)<span class="pval" id="pp-arpu2">—</span></div>
+        <div class="prow" style="border-bottom:none">ARPU (revenue per active user)<span class="pval" id="pp-arpu2">—</span></div>
       </div>
       <div class="plat-card">
         <div class="plat-card-title">LTV analysis</div>
         <div class="prow">Avg customer lifetime<span class="pval" id="pp-life">—</span></div>
-        <div class="prow">LTV (revenue)<span class="pval" style="color:var(--purple)" id="pp-ltv2">—</span></div>
-        <div class="prow">CAC<span class="pval neg" id="pp-cac2">—</span></div>
-        <div class="prow">LTV : CAC ratio<span class="pval" id="pp-ratio2">—</span></div>
-        <div class="prow" style="border-bottom:none">CAC payback period<span class="pval" id="pp-payback">—</span></div>
+        <div class="prow">LTV (total ₹ per user lifetime)<span class="pval" style="color:var(--purple)" id="pp-ltv2">—</span></div>
+        <div class="prow">CAC (cost to get 1 new user)<span class="pval neg" id="pp-cac2">—</span></div>
+        <div class="prow">LTV : CAC (should be &gt;3×)<span class="pval" id="pp-ratio2">—</span></div>
+        <div class="prow" style="border-bottom:none">CAC payback (months to recover)<span class="pval" id="pp-payback">—</span></div>
         <div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">LTV:CAC health (target &gt;3×)<span class="health-label" id="pp-ratio-label">—</span></div><div class="hbar-bg"><div id="pp-ratio-bar" class="hbar-fill"></div></div></div>
       </div>
       <div class="plat-card">
         <div class="plat-card-title">Cost structure / month</div>
         <div class="prow" style="font-size:11px;color:var(--muted2);border-bottom:none">Variable costs (from delivery)</div>
         <div class="prow">Driver payouts<span class="pval neg" id="pp-drivercost">—</span></div>
-        <div class="prow">Daily ops (×30)<span class="pval neg" id="pp-dailyops">—</span></div>
-        <div class="prow">Payment gateway (~2%)<span class="pval neg" id="pp-gateway">—</span></div>
+        <div class="prow">Daily ops cost (×30)<span class="pval neg" id="pp-dailyops">—</span></div>
         <div class="prow" style="font-size:11px;color:var(--muted2);border-bottom:none;margin-top:4px">Fixed costs</div>
         <div class="prow">Marketing / ads<span class="pval neg" id="pp-mktg">—</span></div>
         <div class="prow">Tech infrastructure<span class="pval neg" id="pp-infra">—</span></div>
@@ -661,11 +661,9 @@ function recalcP(){
   // ── Variable costs (from delivery) ──
   const monthlyDriverCost = (delivSnap.tDC || 0) * 30;
   const monthlyOpsCost    = (delivSnap.opcost || 0) * 30;
-  const gmv               = dailyOrders * gv('aov') * 30;  // gross merchandise value
-  const gatewayCost       = gmv * 0.02;  // Razorpay ~2%
 
   // ── Total costs & profit ──
-  const totalCosts = monthlyDriverCost + monthlyOpsCost + gatewayCost + mktg + infra + platops;
+  const totalCosts = monthlyDriverCost + monthlyOpsCost + mktg + infra + platops;
   const netP       = totalRev - totalCosts;
 
   // ── Churn / growth ──
@@ -716,7 +714,6 @@ function recalcP(){
   // costs — variable
   S('pp-drivercost','₹'+ri(monthlyDriverCost));
   S('pp-dailyops','₹'+ri(monthlyOpsCost));
-  S('pp-gateway','₹'+ri(gatewayCost));
   // costs — fixed
   S('pp-mktg','₹'+ri(mktg));
   S('pp-infra','₹'+ri(infra));
@@ -744,8 +741,7 @@ function recalcP(){
     {n:'Delivery fee revenue',   c:'Revenue',       v:monthlyDelivRev,    s:1},
     {n:'Platform fee revenue',   c:'Revenue',       v:monthlyPlatRev,     s:1},
     {n:'Driver payouts',         c:'Variable cost', v:monthlyDriverCost,  s:-1},
-    {n:'Daily operations (×30)', c:'Variable cost', v:monthlyOpsCost,     s:-1},
-    {n:'Payment gateway (~2%)',  c:'Variable cost', v:gatewayCost,        s:-1},
+    {n:'Daily ops cost (×30)',   c:'Variable cost', v:monthlyOpsCost,     s:-1},
     {n:'Marketing / ads',        c:'Fixed cost',    v:mktg,               s:-1},
     {n:'Tech infrastructure',    c:'Fixed cost',    v:infra,              s:-1},
     {n:'Ops / salaries',         c:'Fixed cost',    v:platops,            s:-1},
